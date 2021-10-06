@@ -149,6 +149,7 @@ class chtr(entity):
         self.img = pygame.transform.scale(
             self.img, wsize/(26, 9))
         self.pos = wsize/2
+        self.rect = pygame.Rect(*self.pos, *wsize/2)
         self.speed = 8
         self.invuln = False
 
@@ -159,6 +160,7 @@ class chtr(entity):
             self.surface.blit(itext, wsize - (130, 80))
         stext = font.render(f"Speed: {self.speed}", True, [0, 0, 0])
         self.surface.blit(stext, wsize - (130, 40))
+        self.rect = pygame.Rect(*self.pos, *wsize/2)
 
     def up(self):
         self.move(coords(0, -self.speed-3))
@@ -208,7 +210,7 @@ class block(gobject):
 
     def reset(self):
         self.bsurface = pygame.Surface(
-            (self.size[0], random.randint(100, 250)))
+            (self.size[0], random.randint(280, 300)))
         self.rect = pygame.draw.rect(self.bsurface, self.colour, [
                                      0, 0, *self.bsurface.get_size()])
         if self.top:
