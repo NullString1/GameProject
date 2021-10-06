@@ -1,6 +1,7 @@
 import pygame
 import random
-
+import threading
+import time
 
 class coords(tuple):
     def __new__(cls, *args):
@@ -62,15 +63,16 @@ class eventHandler():
             if self.chtr.pos[1] > wsize[1]:
                 self.chtr.onCollision()
 
-            #for blck in self.blcks:
+            # for blck in self.blcks:
             #    if blck.rect.collidepoint(self.chtr.pos-blck.pos):
             #        self.chtr.onCollision()
             #        break
-            [self.chtr.onCollision() for blck in self.blcks if blck.rect.collidepoint(self.chtr.pos-blck.pos)]
-           
+            [self.chtr.onCollision() for blck in self.blcks if blck.rect.collidepoint(
+                self.chtr.pos-blck.pos)]
+
             #[print(f"{self.chtr.pos=}, {blck.pos=}, {blck.rect.collidepoint(self.chtr.pos)=}") for blck in self.blcks]
             #[print(f"{blck.rect.collidepoint(coords(self.chtr.pos)-blck.pos)=}, {blck.pos=}, {blck.pos+blck.size=}") for blck in self.blcks]
-            
+
             self.chtr.draw()
             [blck.reset()
              for blck in self.blcks if blck.pos[0] < -20]
@@ -258,6 +260,10 @@ def showMenu(surface):
         eHandler.hEvents()
 
 
+def wait(e, t):
+    time.sleep(t)
+    exec(e, globals())
+
 def play(surface):
     global playing
     playing = True
@@ -265,9 +271,15 @@ def play(surface):
     eHandler.clearBtns()
     duck.draw()
     eHandler.addBlock(block(surface, top=True))
-    #eHandler.addBlock(block(surface, top=True))
     eHandler.addBlock(block(surface, top=False))
-    #eHandler.addBlock(block(surface, top=False))
+    threading.Thread(target=wait, args=("eHandler.addBlock(block(surface, top=True))", 1)).start()
+    threading.Thread(target=wait, args=("eHandler.addBlock(block(surface, top=False))", 1)).start()
+    threading.Thread(target=wait, args=("eHandler.addBlock(block(surface, top=True))", 2)).start()
+    threading.Thread(target=wait, args=("eHandler.addBlock(block(surface, top=False))", 2)).start()
+    threading.Thread(target=wait, args=("eHandler.addBlock(block(surface, top=True))", 3)).start()
+    threading.Thread(target=wait, args=("eHandler.addBlock(block(surface, top=False))", 3)).start()
+    threading.Thread(target=wait, args=("eHandler.addBlock(block(surface, top=True))", 4)).start()
+    threading.Thread(target=wait, args=("eHandler.addBlock(block(surface, top=False))", 4)).start()
     while playing:
         eHandler.hEvents()
         duck.move(coords(0, 3))
