@@ -164,7 +164,7 @@ class chtr(entity):
             self.surface.blit(itext, wsize - (130, 80))
         stext = font.render(f"Speed: {self.speed}", True, [0, 0, 0])
         self.surface.blit(stext, wsize - (130, 40))
-        self.rect = pygame.Rect(*self.pos, *self.size)
+        #self.rect = pygame.Rect(*self.pos, *self.size)
         pygame.draw.rect(surface, [0, 0, 0], self.rect, 2)
 
     def up(self):
