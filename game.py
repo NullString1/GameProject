@@ -67,9 +67,10 @@ class eventHandler():
             #    if blck.rect.collidepoint(self.chtr.pos-blck.pos):
             #        self.chtr.onCollision()
             #        break
-            [self.chtr.onCollision() for blck in self.blcks if blck.rect.collidepoint(
-                self.chtr.pos-blck.pos)]
+            #[self.chtr.onCollision() for blck in self.blcks if blck.rect.collidepoint(
+            #    self.chtr.pos-blck.pos)]
 
+            [self.chtr.onCollision() for blck in self.blcks if blck.rect.colliderect(self.chtr.rect)]
             #[print(f"{self.chtr.pos=}, {blck.pos=}, {blck.rect.collidepoint(self.chtr.pos)=}") for blck in self.blcks]
             #[print(f"{blck.rect.collidepoint(coords(self.chtr.pos)-blck.pos)=}, {blck.pos=}, {blck.pos+blck.size=}") for blck in self.blcks]
 
@@ -146,10 +147,11 @@ class entity(gobject):
 class chtr(entity):
     def __init__(self, surface, imgpath):
         entity.__init__(self, surface, imgpath)
+        self.size = wsize/(26, 9)
         self.img = pygame.transform.scale(
-            self.img, wsize/(26, 9))
+            self.img, self.size)
         self.pos = wsize/2
-        self.rect = pygame.Rect(*self.pos, *wsize/2)
+        self.rect = pygame.Rect(*self.pos, *self.size)
         self.speed = 8
         self.invuln = False
 
@@ -160,7 +162,8 @@ class chtr(entity):
             self.surface.blit(itext, wsize - (130, 80))
         stext = font.render(f"Speed: {self.speed}", True, [0, 0, 0])
         self.surface.blit(stext, wsize - (130, 40))
-        self.rect = pygame.Rect(*self.pos, *wsize/2)
+        self.rect = pygame.Rect(*self.pos, *self.size)
+        pygame.draw.rect(surface, [0,0,0], self.rect, 2)
 
     def up(self):
         self.move(coords(0, -self.speed-3))
