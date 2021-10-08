@@ -3,6 +3,7 @@ import random
 import threading
 import time
 
+
 class coords(tuple):
     def __new__(cls, *args):
         if type(args[0]) in [int, float]:
@@ -67,10 +68,11 @@ class eventHandler():
             #    if blck.rect.collidepoint(self.chtr.pos-blck.pos):
             #        self.chtr.onCollision()
             #        break
-            #[self.chtr.onCollision() for blck in self.blcks if blck.rect.collidepoint(
+            # [self.chtr.onCollision() for blck in self.blcks if blck.rect.collidepoint(
             #    self.chtr.pos-blck.pos)]
 
-            [self.chtr.onCollision() for blck in self.blcks if blck.rect.colliderect(self.chtr.rect)]
+            [self.chtr.onCollision()
+             for blck in self.blcks if blck.rect.colliderect(self.chtr.rect)]
             #[print(f"{self.chtr.pos=}, {blck.pos=}, {blck.rect.collidepoint(self.chtr.pos)=}") for blck in self.blcks]
             #[print(f"{blck.rect.collidepoint(coords(self.chtr.pos)-blck.pos)=}, {blck.pos=}, {blck.pos+blck.size=}") for blck in self.blcks]
 
@@ -163,7 +165,7 @@ class chtr(entity):
         stext = font.render(f"Speed: {self.speed}", True, [0, 0, 0])
         self.surface.blit(stext, wsize - (130, 40))
         self.rect = pygame.Rect(*self.pos, *self.size)
-        pygame.draw.rect(surface, [0,0,0], self.rect, 2)
+        pygame.draw.rect(surface, [0, 0, 0], self.rect, 2)
 
     def up(self):
         self.move(coords(0, -self.speed-3))
@@ -269,6 +271,7 @@ def wait(e, t):
     time.sleep(t)
     exec(e, globals())
 
+
 def play(surface):
     global playing
     playing = True
@@ -277,14 +280,22 @@ def play(surface):
     duck.draw()
     eHandler.addBlock(block(surface, top=True))
     eHandler.addBlock(block(surface, top=False))
-    threading.Thread(target=wait, args=("eHandler.addBlock(block(surface, top=True))", 1)).start()
-    threading.Thread(target=wait, args=("eHandler.addBlock(block(surface, top=False))", 1)).start()
-    threading.Thread(target=wait, args=("eHandler.addBlock(block(surface, top=True))", 2)).start()
-    threading.Thread(target=wait, args=("eHandler.addBlock(block(surface, top=False))", 2)).start()
-    threading.Thread(target=wait, args=("eHandler.addBlock(block(surface, top=True))", 3)).start()
-    threading.Thread(target=wait, args=("eHandler.addBlock(block(surface, top=False))", 3)).start()
-    threading.Thread(target=wait, args=("eHandler.addBlock(block(surface, top=True))", 4)).start()
-    threading.Thread(target=wait, args=("eHandler.addBlock(block(surface, top=False))", 4)).start()
+    threading.Thread(target=wait, args=(
+        "eHandler.addBlock(block(surface, top=True))", 1)).start()
+    threading.Thread(target=wait, args=(
+        "eHandler.addBlock(block(surface, top=False))", 1)).start()
+    threading.Thread(target=wait, args=(
+        "eHandler.addBlock(block(surface, top=True))", 2)).start()
+    threading.Thread(target=wait, args=(
+        "eHandler.addBlock(block(surface, top=False))", 2)).start()
+    threading.Thread(target=wait, args=(
+        "eHandler.addBlock(block(surface, top=True))", 3)).start()
+    threading.Thread(target=wait, args=(
+        "eHandler.addBlock(block(surface, top=False))", 3)).start()
+    threading.Thread(target=wait, args=(
+        "eHandler.addBlock(block(surface, top=True))", 4)).start()
+    threading.Thread(target=wait, args=(
+        "eHandler.addBlock(block(surface, top=False))", 4)).start()
     while playing:
         eHandler.hEvents()
         duck.move(coords(0, 3))
