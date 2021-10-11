@@ -170,7 +170,7 @@ class chtr(entity):
         self.rect.x = self.pos[0]
         self.rect.y = self.pos[1] + 5
         #self.rect = pygame.Rect(*self.pos, *self.size)
-        pygame.draw.rect(self.surface, [0, 0, 0], self.rect, 2)
+        #pygame.draw.rect(self.surface, [0, 0, 0], self.rect, 2)
         # print(f"{self.score=}")
 
     def up(self):
