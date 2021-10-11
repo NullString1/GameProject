@@ -153,7 +153,7 @@ class chtr(entity):
         self.img = pygame.transform.scale(
             self.img, self.size)
         self.pos = wsize/2
-        self.rect = pygame.Rect(*self.pos, *self.size)
+        self.rect = pygame.Rect(*self.pos + (-5, 5), *self.size - (5, 10))
         self.blockspeed = 10
         self.invuln = False
         self.score = 0
@@ -168,9 +168,9 @@ class chtr(entity):
         surface.blit(score, (50, 50))
         self.surface.blit(stext, wsize - (130, 40))
         self.rect.x = self.pos[0]
-        self.rect.y = self.pos[1]
+        self.rect.y = self.pos[1] + 5
         #self.rect = pygame.Rect(*self.pos, *self.size)
-        #pygame.draw.rect(self.surface, [0, 0, 0], self.rect, 2)
+        pygame.draw.rect(self.surface, [0, 0, 0], self.rect, 2)
         # print(f"{self.score=}")
 
     def up(self):
@@ -265,9 +265,9 @@ class blockpair():
     def draw(self):
         self.top.draw()
         self.bottom.draw()
-        font = pygame.font.SysFont("arial", 30)
-        h = font.render(f"{self.h}", True, [0, 0, 0])
-        self.surface.blit(h, (self.x-60, 50))
+        #font = pygame.font.SysFont("arial", 30)
+        #h = font.render(f"{self.h}", True, [0, 0, 0])
+        #self.surface.blit(h, (self.x-60, 50))
 
     def reset(self):
         self.h = random.randint(100, 500)
