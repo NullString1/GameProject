@@ -44,7 +44,7 @@ class eventHandler():
         self.chtr = chtr
         self.surface = surface
         self.btns = []
-        self.blcks = []
+        self.blockpairs = []
 
     def hEvents(self):
         for event in pygame.event.get():
@@ -71,21 +71,21 @@ class eventHandler():
             # [self.chtr.onCollision() for blck in self.blcks if blck.rect.collidepoint(
             #    self.chtr.pos-blck.pos)]
 
-            [self.chtr.onCollision()
-             for blck in self.blcks if blck.rect.colliderect(self.chtr.rect)]
+            [blckpair.checkcollision(self.chtr)
+             for blckpair in self.blockpairs]
             #[print(f"{self.chtr.pos=}, {blck.pos=}, {blck.rect.collidepoint(self.chtr.pos)=}") for blck in self.blcks]
             #[print(f"{blck.rect.collidepoint(coords(self.chtr.pos)-blck.pos)=}, {blck.pos=}, {blck.pos+blck.size=}") for blck in self.blcks]
 
             self.chtr.draw()
-            [blck.reset()
-             for blck in self.blcks if blck.pos[0] < -20]
-            [blck.draw() for blck in self.blcks]
+            [blckpair.reset()
+             for blckpair in self.blockpairs if blckpair.x < -20]
+            [blckpair.draw() for blckpair in self.blockpairs]
 
         #[self.blcks.remove(blck) for blck in self.blcks if blck.pos[0]<-20]
         [btn.draw() for btn in self.btns]
 
-    def addBlock(self, blck):
-        self.blcks.append(blck)
+    def addBlockpair(self, bp):
+        self.blockpairs.append(bp)
 
     def addButton(self, btn):
         self.btns.append(btn)
@@ -154,38 +154,46 @@ class chtr(entity):
             self.img, self.size)
         self.pos = wsize/2
         self.rect = pygame.Rect(*self.pos, *self.size)
-        self.speed = 8
+        self.blockspeed = 10
         self.invuln = False
+        self.score = 0
 
     def draw(self):
         entity.draw(self)
         if self.invuln:
             itext = font.render("Extra Life", True, [0, 0, 0])
             self.surface.blit(itext, wsize - (130, 80))
-        stext = font.render(f"Speed: {self.speed}", True, [0, 0, 0])
+        stext = font.render(f"Speed: {self.blockspeed}", True, [0, 0, 0])
+        score = font.render(f"Score: {duck.score}", True, [0, 0, 0])
+        surface.blit(score, (50, 50))
         self.surface.blit(stext, wsize - (130, 40))
+        self.rect.x = self.pos[0]
+        self.rect.y = self.pos[1]
         #self.rect = pygame.Rect(*self.pos, *self.size)
-        pygame.draw.rect(surface, [0, 0, 0], self.rect, 2)
+        #pygame.draw.rect(self.surface, [0, 0, 0], self.rect, 2)
+        # print(f"{self.score=}")
 
     def up(self):
-        self.move(coords(0, -self.speed-3))
+        self.move(coords(0, -15))
 
     def down(self):
-        self.move(coords(0, self.speed))
+        self.move(coords(0, 8))
 
     def reset(self):
         self.setpos(wsize/2)
 
     def upgLife(self):
         self.invuln = True
+        self.score -= 50
         itext = font.render("Extra Life", True, [0, 0, 0])
         self.surface.blit(itext, wsize - (130, 80))
         pygame.display.update()
 
     def upgSpeed(self):
-        if self.speed > 10:
-            self.speed -= 10
-        stext = font.render(f"Speed: {self.speed}", True, [0, 0, 0])
+        if self.blockspeed > 7:
+            self.blockspeed -= 1
+            self.score -= 10
+        stext = font.render(f"Speed: {self.blockspeed}", True, [0, 0, 0])
         self.surface.blit(stext, wsize - (130, 40))
         pygame.display.update()
 
@@ -196,33 +204,93 @@ class chtr(entity):
             self.draw()
         else:
             self.reset()
-            print("collision")
-            [blck.reset()
-             for blck in eHandler.blcks]
+            # print("collision")
+            eHandler.blockpairs = []
             showMenu(self.surface)
 
 
 class block(gobject):
-    def __init__(self, /, surface, colour=(120, 0, 0), size=(40, 300), top=True):
+    def __init__(self, /, surface, colour=(120, 0, 0), size=(40, 250), top=True):
         gobject.__init__(self, surface)
+        self.bsurface = pygame.Surface(size)
+        self.bsurface.fill(colour)
         self.colour = colour
         self.size = size
         self.top = top
-        self.reset()
+        if self.top:
+            self.opos = coords(wsize[0], 0)
+        else:
+            self.opos = coords(wsize[0], wsize[1]-self.size[1])
+        self.pos = self.opos
+        self.rect = pygame.Rect(*self.pos, *self.size)
+        self.draw()
 
     def draw(self):
+        self.rect.x = self.pos[0]
+        self.rect.y = self.pos[1]
         self.surface.blit(self.bsurface, self.pos)
 
+    def setx(self, x):
+        self.pos = coords(x, self.pos[1])
+    # def reset(self):
+    #    self.setpos(coords(self.opos))
+    #    self.draw()
+
+
+class blockpair():
+    def __init__(self, /, surface):
+        self.surface = surface
+        self.h = random.randint(100, 500)
+        self.top = block(surface, top=True, size=(40, self.h))
+        self.bottom = block(surface, top=False, size=(40, wsize[1]-self.h-200))
+        self.x = wsize[1]
+        self.rect = pygame.Rect(wsize[0], self.h, 40, wsize[1]-self.h-200)
+        self.disabled = False
+
+    def setx(self, x):
+        self.x = x
+        self.top.setx(x)
+        self.bottom.setx(x)
+
+    def move(self, dx):
+        self.top.move(coords(dx, 0))
+        self.bottom.move(coords(dx, 0))
+        self.rect.left = self.top.pos[0]
+        self.x = self.top.pos[0]
+        if self.x < wsize[0]/2-50:
+            self.disabled = False
+        # print(
+        #    f"{self.rect.x=}, {self.x=}, {self.top.pos[0]=}, {self.bottom.pos[0]=}")
+
+    def draw(self):
+        self.top.draw()
+        self.bottom.draw()
+        font = pygame.font.SysFont("arial", 30)
+        h = font.render(f"{self.h}", True, [0, 0, 0])
+        self.surface.blit(h, (self.x-60, 50))
+
     def reset(self):
-        self.bsurface = pygame.Surface(
-            (self.size[0], random.randint(280, 300)))
-        self.rect = pygame.draw.rect(self.bsurface, self.colour, [
-                                     0, 0, *self.bsurface.get_size()])
-        if self.top:
-            y = 0
-        else:
-            y = self.surface.get_height()-self.bsurface.get_height()
-        self.pos = coords(1240, y)
+        self.h = random.randint(100, 500)
+        #h = 500
+        self.top = block(surface, top=True, size=(40, self.h))
+        self.bottom = block(surface, top=False, size=(40, wsize[1]-self.h-200))
+        # self.top.setx(wsize[0])
+        # self.bottom.setx(wsize[0])
+        self.x = wsize[0]
+        self.disabled = False
+
+    def checkcollision(self, chtr: chtr):
+        if self.rect.colliderect(chtr.rect) and not self.disabled:
+            chtr.score += 1
+            self.disabled = True
+
+        if self.top.rect.colliderect(chtr.rect):
+            chtr.onCollision()
+            self.disabled = True
+
+        if self.bottom.rect.colliderect(chtr.rect):
+            chtr.onCollision()
+            self.disabled = True
 
 
 class button(bobject):
@@ -253,8 +321,14 @@ def showMenu(surface):
     global playing
     playing = False
     font = pygame.font.SysFont("arial", 30)
-    title = font.render("Duck Game", True, [0, 0, 0])
     pygame.draw.rect(surface, (255, 255, 255), [0, 0, *surface.get_size()])
+    title = font.render("Duck Game", True, [0, 0, 0])
+    score = font.render(f"Score: {duck.score}", True, [0, 0, 0])
+    if duck.invuln:
+        itext = font.render("Extra Life", True, [0, 0, 0])
+        surface.blit(itext, wsize - (130, 80))
+    stext = font.render(f"Speed: {duck.blockspeed}", True, [0, 0, 0])
+    surface.blit(stext, wsize - (130, 40))
     eHandler.clearBtns()
     eHandler.addButton(button(surface, wsize/2+(30, 0), "Start Game",
                        lambda: exec("play(surface)")))
@@ -262,6 +336,7 @@ def showMenu(surface):
                        "Upgrades", lambda: exec("showUpgrades(surface)")))
     eHandler.addButton(button(surface, wsize/2-(30, 0), "Exit", exit))
     surface.blit(title, (wsize[0]/2, 50))
+    surface.blit(score, (50, 50))
     pygame.display.update()
     while True:
         eHandler.hEvents()
@@ -274,32 +349,28 @@ def wait(e, t):
 
 def play(surface):
     global playing
+    global threads
     playing = True
     pygame.draw.rect(surface, (255, 255, 255), [0, 0, *wsize])
     eHandler.clearBtns()
     duck.draw()
-    eHandler.addBlock(block(surface, top=True))
-    eHandler.addBlock(block(surface, top=False))
-    threading.Thread(target=wait, args=(
-        "eHandler.addBlock(block(surface, top=True))", 1)).start()
-    threading.Thread(target=wait, args=(
-        "eHandler.addBlock(block(surface, top=False))", 1)).start()
-    threading.Thread(target=wait, args=(
-        "eHandler.addBlock(block(surface, top=True))", 2)).start()
-    threading.Thread(target=wait, args=(
-        "eHandler.addBlock(block(surface, top=False))", 2)).start()
-    threading.Thread(target=wait, args=(
-        "eHandler.addBlock(block(surface, top=True))", 3)).start()
-    threading.Thread(target=wait, args=(
-        "eHandler.addBlock(block(surface, top=False))", 3)).start()
-    threading.Thread(target=wait, args=(
-        "eHandler.addBlock(block(surface, top=True))", 4)).start()
-    threading.Thread(target=wait, args=(
-        "eHandler.addBlock(block(surface, top=False))", 4)).start()
+    while [thread for thread in threads if thread.is_alive()] != []:
+        time.sleep(0.1)
+    eHandler.blockpairs = []
+    threads = []
+    eHandler.addBlockpair(blockpair(surface))
+    threads.append(threading.Thread(target=wait, args=(
+        "eHandler.addBlockpair(blockpair(surface))", 1)))
+    threads.append(threading.Thread(target=wait, args=(
+        "eHandler.addBlockpair(blockpair(surface))", 2)))
+    [thread.start() for thread in threads]
+    # threading.Thread(target=wait, args=(
+    #    "eHandler.addBlockpair(blockpair(surface))", 3)).start()
+
     while playing:
         eHandler.hEvents()
-        duck.move(coords(0, 3))
-        [blck.move(coords(-5, 0)) for blck in eHandler.blcks]
+        duck.move(coords(0, 6))
+        [blckpair.move(-duck.blockspeed) for blckpair in eHandler.blockpairs]
         #duck.move(coords(10, 0))
         pygame.display.update()
         pygame.draw.rect(surface, (255, 255, 255), [0, 0, *wsize])
@@ -313,10 +384,12 @@ def showUpgrades(surface):
     title = font.render("Duck Game", True, [0, 0, 0])
     pygame.draw.rect(surface, (255, 255, 255), [0, 0, *wsize])
     eHandler.clearBtns()
-    eHandler.addButton(button(surface, wsize/2+(0, 0),
-                       "Decrease speed (10p)", duck.upgSpeed))
-    eHandler.addButton(button(surface, wsize/2+(220, 0),
-                       "Extra life (50p)", duck.upgLife))
+    if duck.score > 10:
+        eHandler.addButton(button(surface, wsize/2+(0, 0),
+                           "Decrease speed (10p)", duck.upgSpeed))
+    if duck.score > 50:
+        eHandler.addButton(button(surface, wsize/2+(220, 0),
+                                  "Extra life (50p)", duck.upgLife))
     eHandler.addButton(button(surface, wsize/2-(150, 0),
                        "Back to menu", lambda: exec("showMenu(surface)")))
     surface.blit(title, (wsize[0]/2, 50))
@@ -335,6 +408,7 @@ duck = chtr(surface, "duck.png")
 eHandler = eventHandler(duck, surface)
 font = pygame.font.SysFont("arial", 30)
 playing = False
+threads = []
 
 
 def main():
