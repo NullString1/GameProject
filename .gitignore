@@ -129,3 +129,4 @@ dmypy.json
 *.py.old
 
 *.zip
+*.cfg

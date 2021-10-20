@@ -2,6 +2,7 @@ import pygame
 import random
 import threading
 import time
+from configparser import ConfigParser
 
 
 class coords(tuple):
@@ -40,15 +41,19 @@ class coords(tuple):
 
 
 class eventHandler():
-    def __init__(self, chtr, surface):
+    def __init__(self, chtr, surface, configp):
         self.chtr = chtr
         self.surface = surface
         self.btns = []
         self.blockpairs = []
+        self.configp = configp
 
     def hEvents(self):
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
+                self.configp.set("duck", "points", str(self.chtr.points))
+                with open("duck.cfg", "w") as f:
+                    self.configp.write(f)
                 pygame.quit()
                 quit()
             if event.type == pygame.MOUSEBUTTONDOWN:
@@ -153,10 +158,11 @@ class chtr(entity):
         self.img = pygame.transform.scale(
             self.img, self.size)
         self.pos = wsize/2
-        self.rect = pygame.Rect(*self.pos + (-5, 5), *self.size - (5, 10))
+        self.rect = pygame.Rect(*self.pos + (-5, 15), *self.size - (5, 10))
         self.blockspeed = 10
         self.invuln = False
         self.score = 0
+        self.points = 0
 
     def draw(self):
         entity.draw(self)
@@ -165,7 +171,9 @@ class chtr(entity):
             self.surface.blit(itext, wsize - (130, 80))
         stext = font.render(f"Speed: {self.blockspeed}", True, [0, 0, 0])
         score = font.render(f"Score: {duck.score}", True, [0, 0, 0])
-        surface.blit(score, (50, 50))
+        points = font.render(f"Points: {duck.points}", True, [0, 0, 0])
+        self.surface.blit(score, (50, 50))
+        self.surface.blit(points, (50, 75))
         self.surface.blit(stext, wsize - (130, 40))
         self.rect.x = self.pos[0]
         self.rect.y = self.pos[1] + 5
@@ -184,7 +192,7 @@ class chtr(entity):
 
     def upgLife(self):
         self.invuln = True
-        self.score -= 50
+        self.points -= 50
         itext = font.render("Extra Life", True, [0, 0, 0])
         self.surface.blit(itext, wsize - (130, 80))
         pygame.display.update()
@@ -192,7 +200,7 @@ class chtr(entity):
     def upgSpeed(self):
         if self.blockspeed > 7:
             self.blockspeed -= 1
-            self.score -= 10
+            self.points -= 10
         stext = font.render(f"Speed: {self.blockspeed}", True, [0, 0, 0])
         self.surface.blit(stext, wsize - (130, 40))
         pygame.display.update()
@@ -282,6 +290,7 @@ class blockpair():
     def checkcollision(self, chtr: chtr):
         if self.rect.colliderect(chtr.rect) and not self.disabled:
             chtr.score += 1
+            chtr.points += 1
             self.disabled = True
 
         if self.top.rect.colliderect(chtr.rect):
@@ -323,7 +332,7 @@ def showMenu(surface):
     font = pygame.font.SysFont("arial", 30)
     pygame.draw.rect(surface, (255, 255, 255), [0, 0, *surface.get_size()])
     title = font.render("Duck Game", True, [0, 0, 0])
-    score = font.render(f"Score: {duck.score}", True, [0, 0, 0])
+    points = font.render(f"Points: {duck.points}", True, [0, 0, 0])
     if duck.invuln:
         itext = font.render("Extra Life", True, [0, 0, 0])
         surface.blit(itext, wsize - (130, 80))
@@ -336,7 +345,7 @@ def showMenu(surface):
                        "Upgrades", lambda: exec("showUpgrades(surface)")))
     eHandler.addButton(button(surface, wsize/2-(30, 0), "Exit", exit))
     surface.blit(title, (wsize[0]/2, 50))
-    surface.blit(score, (50, 50))
+    surface.blit(points, (50, 50))
     pygame.display.update()
     while True:
         eHandler.hEvents()
@@ -366,7 +375,7 @@ def play(surface):
     [thread.start() for thread in threads]
     # threading.Thread(target=wait, args=(
     #    "eHandler.addBlockpair(blockpair(surface))", 3)).start()
-
+    duck.score = 0
     while playing:
         eHandler.hEvents()
         duck.move(coords(0, 6))
@@ -384,10 +393,10 @@ def showUpgrades(surface):
     title = font.render("Duck Game", True, [0, 0, 0])
     pygame.draw.rect(surface, (255, 255, 255), [0, 0, *wsize])
     eHandler.clearBtns()
-    if duck.score > 10:
+    if duck.points > 10:
         eHandler.addButton(button(surface, wsize/2+(0, 0),
                            "Decrease speed (10p)", duck.upgSpeed))
-    if duck.score > 50:
+    if duck.points > 50:
         eHandler.addButton(button(surface, wsize/2+(220, 0),
                                   "Extra life (50p)", duck.upgLife))
     eHandler.addButton(button(surface, wsize/2-(150, 0),
@@ -405,7 +414,19 @@ surface = pygame.display.set_mode(wsize)
 pygame.draw.rect(surface, (255, 255, 255), [0, 0, *wsize])
 pygame.display.set_caption("Game")
 duck = chtr(surface, "duck.png")
-eHandler = eventHandler(duck, surface)
+configp = ConfigParser()
+try:
+    with open("duck.cfg", "r") as f:
+        configp.read_file(f)
+    if configp.has_section("duck"):
+        duck.points = configp.getint("duck", "points")
+except Exception as e:
+    print(f"Error: {e}")
+
+if not configp.has_section("duck"):
+    configp.add_section("duck")
+    configp.set("duck", "points", str(0))
+eHandler = eventHandler(duck, surface, configp)
 font = pygame.font.SysFont("arial", 30)
 playing = False
 threads = []
