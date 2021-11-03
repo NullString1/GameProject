@@ -51,11 +51,7 @@ class eventHandler():  # Game event handler
     def hEvents(self):  # Main handler
         for event in pygame.event.get():  # Loop through new events
             if event.type == pygame.QUIT:  # If event is quit, save score and close
-                self.configp.set("duck", "points", str(self.chtr.points))
-                with open("duck.cfg", "w") as f:
-                    self.configp.write(f)
-                pygame.quit()
-                quit()
+                quitgame()
             if event.type == pygame.MOUSEBUTTONDOWN:  # If event is mouse click, check if click is in bounds of a button and the button is visible then call button's onClick
                 [btn.onClick() for btn in self.btns if btn.rect.collidepoint(
                     pygame.mouse.get_pos()) and btn.isvisible]
@@ -349,7 +345,7 @@ def showMenu(surface):  # Draw game menu
                        lambda: exec("play(surface)")))
     eHandler.addButton(button(surface, wsize/2+(150, 0),
                        "Upgrades", lambda: exec("showUpgrades(surface)")))
-    eHandler.addButton(button(surface, wsize/2-(30, 0), "Exit", exit))
+    eHandler.addButton(button(surface, wsize/2-(30, 0), "Exit", quitgame))
     surface.blit(title, (wsize[0]/2, 50))
     surface.blit(points, (50, 50))
     pygame.display.update()  # Update display
@@ -413,6 +409,12 @@ def showUpgrades(surface):  # Show upgrades menu
     while True:
         eHandler.hEvents()  # Handle events to listen for button clicks
 
+def quitgame():
+    configp.set("duck", "points", str(duck.points))
+    with open("duck.cfg", "w") as f:
+        configp.write(f)
+    pygame.quit()
+    quit()
 
 pygame.init()  # Start pygame
 clock = pygame.time.Clock()
